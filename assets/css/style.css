@@ -1,0 +1,28 @@
+/* 汇率显示样式 */
+.exchange-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px auto;
+    max-width: 300px;
+    text-align: center;
+}
+
+.rate-display {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+.timestamp {
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* 时间显示样式 */
+.time-display {
+    font-size: 14px;
+    color: #444;
+    margin-top: 10px;
+}
