@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer Application | Astral Time</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dealer Application</h1>
+            <div id="ip-display" class="ip-badge">Loading location...</div>
+        </header>
+
+        <main>
+            <form id="dealer-form" class="application-form">
+                <input type="hidden" name="ip_address" id="user-ip">
+                <input type="hidden" name="country" id="user-country">
+                
+                <div class="form-group">
+                    <label for="name">Full Legal Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="referral">Referral Code (Optional)</label>
+                    <input type="text" id="referral" name="referral">
+                </div>
+
+                <div class="form-group">
+                    <label>ID Card Upload</label>
+                    <div class="upload-group">
+                        <div class="upload-box">
+                            <input type="file" id="id-front" name="id_front" accept="image/*" required>
+                            <label for="id-front">Front Side</label>
+                        </div>
+                        <div class="upload-box">
+                            <input type="file" id="id-back" name="id_back" accept="image/*" required>
+                            <label for="id-back">Back Side</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">I agree to the terms and conditions</label>
+                </div>
+
+                <button type="submit" class="btn primary">Submit Application</button>
+            </form>
+        </main>
+
+        <footer>
+            <p>Copyright © <span id="current-year">2025</span> Astral Time Limited. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="../../assets/js/ip-tracker.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Set IP and country in form
+        document.getElementById('user-ip').value = localStorage.getItem('ip') || '';
+        document.getElementById('user-country').value = localStorage.getItem('country') || '';
+
+        // Form submission with quick face verification
+        document.getElementById('dealer-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const verified = await FaceVerification.quickVerify();
+            if(verified) {
+                // Submit form to Azure Function
+                const formData = new FormData(e.target);
+                
+                try {
+                    const response = await fetch('YOUR_AZURE_FUNCTION_URL', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if(response.ok) {
+                        alert('Application submitted successfully!');
+                        window.location.href = '/';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Submission failed. Please try again.');
+                }
+            } else {
+                alert('Face verification failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

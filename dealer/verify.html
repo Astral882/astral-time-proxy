@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer Verification | Astral Time</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        /* Unified verification box */
+        .verification-box {
+            text-align: center;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin: 1rem auto;
+            max-width: 400px;
+            border: 1px solid #e2e8f0;
+        }
+        /* Device-specific prompts */
+        .device-prompt {
+            margin: 1.5rem 0;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dealer Identity Verification</h1>
+            <div id="ip-display" class="ip-badge">Loading location...</div>
+        </header>
+
+        <main>
+            <!-- Universal Verification Box -->
+            <div id="verification-box" class="verification-box">
+                <!-- Dynamic content will be inserted here by JS -->
+            </div>
+
+            <!-- Lock Message -->
+            <div id="lock-message" class="hidden">
+                <p class="error">⚠️ Too many failed attempts. Please try again in 30 minutes.</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Copyright © <span id="current-year">2025</span> Astral Time Limited</p>
+        </footer>
+    </div>
+
+    <script src="../../assets/js/ip-tracker.js"></script>
+    <script src="../../assets/js/face-api.js"></script>
+    <script>
+        // Detect device type
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            
+            if(localStorage.getItem('lockTime')) {
+                showLockMessage();
+            } else {
+                startVerification();
+            }
+        });
+
+        // Core verification flow
+        function startVerification() {
+            const box = document.getElementById('verification-box');
+            let attempts = 3;
+
+            if(isIOS()) {
+                // iOS Flow
+                box.innerHTML = `
+                    <h3>Identity Verification</h3>
+                    <p class="device-prompt">iOS users: Please take a clear photo of your face</p>
+                    <button id="capture-btn" class="btn primary">
+                        Take Photo
+                    </button>
+                    <p id="status" class="small-text"></p>
+                `;
+
+                document.getElementById('capture-btn').addEventListener('click', () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.capture = 'environment';
+                    
+                    input.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if(!file) return;
+                        
+                        updateStatus("Verifying...");
+                        const verified = await verifyImage(file);
+                        handleVerificationResult(verified);
+                    };
+                    input.click();
+                });
+            } else {
+                // Android/Desktop Flow
+                box.innerHTML = `
+                    <h3>Identity Verification</h3>
+                    <div id="face-container"></div>
+                    <p id="attempts-info">Attempts remaining: ${attempts}</p>
+                `;
+                
+                new FaceVerification({
+                    container: 'face-container',
+                    onVerified: () => window.location.href = 'apply.html',
+                    onFailure: () => {
+                        if(--attempts <= 0) lockSystem();
+                        document.getElementById('attempts-info').textContent = 
+                            `Attempts remaining: ${attempts}`;
+                    }
+                }).start();
+            }
+        }
+
+        // Shared functions
+        async function verifyImage(file) {
+            try {
+                const response = await fetch('YOUR_AZURE_FUNCTION_URL', {
+                    method: 'POST',
+                    body: file
+                });
+                return response.ok;
+            } catch (error) {
+                console.error('Verification error:', error);
+                return false;
+            }
+        }
+
+        function handleVerificationResult(verified) {
+            const statusEl = document.getElementById('status');
+            if(verified) {
+                window.location.href = 'apply.html';
+            } else {
+                statusEl.textContent = "Verification failed. Please try again.";
+            }
+        }
+
+        function lockSystem() {
+            localStorage.setItem('lockTime', Date.now());
+            showLockMessage();
+            setTimeout(() => {
+                localStorage.removeItem('lockTime');
+            }, 30 * 60 * 1000);
+        }
+
+        function showLockMessage() {
+            document.getElementById('verification-box').classList.add('hidden');
+            document.getElementById('lock-message').classList.remove('hidden');
+        }
+
+        function updateStatus(text) {
+            const el = document.getElementById('status');
+            if(el) el.textContent = text;
+        }
+    </script>
+</body>
+</html>
